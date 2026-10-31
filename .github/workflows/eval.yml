@@ -2,6 +2,8 @@ name: Evaluación RAG
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'app/**'
       - 'tests/**'
