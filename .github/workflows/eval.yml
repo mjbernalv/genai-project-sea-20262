@@ -59,7 +59,7 @@ jobs:
       run: |
         python -m app.model.prompt_registry
         python -c "from app.model.rag_pipeline import save_vectorstore; save_vectorstore()"
-        python app/model/run_eval.py
+        python -m app.model.run_eval
 
     - name: Quality gate (umbrales mínimos)
       run: pytest tests/test_run_eval.py -v
