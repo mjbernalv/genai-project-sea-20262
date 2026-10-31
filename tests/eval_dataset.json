@@ -1,0 +1,30 @@
+[
+  {
+    "question": "¿Cuál es el objetivo de inversión del fondo BTG Pactual Oro y qué perfil de riesgo tiene?",
+    "answer": "El fondo BTG Pactual Oro busca ofrecer un instrumento de inversión local con exposición al oro a través de instrumentos financieros internacionales denominados en dólares. Tiene exposición al dólar, está orientado al crecimiento de capital en el largo plazo y su perfil de riesgo es agresivo."
+  },
+  {
+    "question": "¿Qué comisión de administración y qué monto mínimo de apertura tiene la Clase A del fondo BTG Pactual Oro?",
+    "answer": "La Clase A del fondo BTG Pactual Oro tiene una comisión de administración del 2,00% E.A. y un monto mínimo de apertura de $1.000.000."
+  },
+  {
+    "question": "¿Cuánto es el pacto de permanencia y la penalidad por retiro anticipado en el fondo BTG Pactual Liquidez Dólares?",
+    "answer": "En el fondo BTG Pactual Liquidez Dólares el pacto de permanencia es de ocho (8) días calendario y la penalidad por retirar sin cumplir el pacto es del cinco por ciento (5%) de la redención."
+  },
+  {
+    "question": "¿Qué diferencia hay entre el objetivo de los fondos BTG Pactual Acciones Internacionales y Acciones Mercados Emergentes?",
+    "answer": "Acciones Internacionales ofrece exposición a un portafolio diversificado de renta variable internacional con exposición a monedas extranjeras, orientado al crecimiento de capital en el largo plazo. Acciones Mercados Emergentes tiene el mismo enfoque, pero concentra el portafolio de renta variable internacional en mercados emergentes."
+  },
+  {
+    "question": "¿Qué comisión cobran las clases A y B del fondo BTG Pactual Renta Fija Internacional y qué monto mínimo exige la Clase B?",
+    "answer": "En el fondo BTG Pactual Renta Fija Internacional la Clase A cobra una comisión de administración del 1,75% y la Clase B del 1,30%. La Clase B exige un monto mínimo de apertura de $1.000.000.000."
+  },
+  {
+    "question": "¿Los recursos invertidos en los fondos están protegidos por Fogafín?",
+    "answer": "No. Los recursos invertidos en el fondo no son depósitos y no están amparados por el seguro de depósito de Fogafín."
+  },
+  {
+    "question": "¿Cuál de los fondos tiene la comisión de administración más baja para la Clase A?",
+    "answer": "BTG Pactual Liquidez Dólares, con una comisión del 1,50% para la Clase A (los demás fondos cobran entre 1,75% y 2,00%)."
+  }
+]

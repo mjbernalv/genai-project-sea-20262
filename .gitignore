@@ -224,3 +224,9 @@ __marimo__/
 
 # MacOS
 .DS_Store
+
+# Generated artifacts
+vectorstore/
+mlruns/
+mlartifacts/
+mlflow.db
