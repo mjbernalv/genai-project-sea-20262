@@ -10,7 +10,7 @@ from app.model.llm_provider import describe
 import os
 import re
 
-CHAT_EXPERIMENT = "chatbot_rrhh"
+CHAT_EXPERIMENT = "chatbot_fics_btg"
 EVAL_EXPERIMENT = "rag_evaluation"
 
 _autolog_enabled = False
@@ -35,7 +35,7 @@ def app_config(prompt_uri: str, k: int) -> dict:
 
 def _prompt_label(prompt_uri: str) -> str:
     """
-    prompts:/asistente_rrhh/2 → asistente_rrhh-v2 ; app/prompts/v1_x.txt → local-v1_x
+    prompts:/asistente_fics_btg/2 → asistente_fics_btg-v2 ; app/prompts/v1_x.txt → local-v1_x
     """
     if prompt_uri.startswith("prompts:/"):
         return prompt_uri.replace("prompts:/", "").replace("/", "-v")

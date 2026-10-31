@@ -1,16 +1,5 @@
 """
-Evaluación del RAG con mlflow.genai.evaluate y jueces LLM (LLM-as-a-judge).
-
-Cada pregunta del dataset genera una traza; los jueces la califican y dejan su
-razonamiento (rationale) adjunto a la traza. El resultado agregado queda en un
-run del experimento "rag_evaluation", enlazado a la versión de la app
-(proveedor + modelo + prompt + k) y a la versión del prompt.
-
-Uso:
-    python app/run_eval.py
-    PROMPT_VERSION=prompts:/asistente_rrhh@v2_resumido_directo python app/run_eval.py
-    RETRIEVER_K=6 python app/run_eval.py
-    EVAL_SCORERS=correctness,retrieval_groundedness python app/run_eval.py   # solo algunos jueces
+Modulo para ejecutar la evaluación de la cadena RAG con MLflow GenAI.
 """
 
 from app.model.rag_pipeline import build_chain, load_vectorstore_from_disk
@@ -84,7 +73,9 @@ def get_scorers(judge_model: str):
             name="tono_profesional",
             guidelines=(
                 "La respuesta debe tener un tono formal y profesional, apropiado "
-                "para un asistente de Recursos Humanos, y no debe inventar políticas."
+                "para un asistente de información sobre fondos de inversión, no debe "
+                "inventar cifras ni condiciones de los fondos y no debe dar "
+                "recomendaciones personalizadas de inversión."
             ),
             model=judge_model,
         ),

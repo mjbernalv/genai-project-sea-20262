@@ -8,6 +8,7 @@ from app.model.rag_pipeline import (
     build_chain,
     list_prompt_versions,
     load_vectorstore_from_disk,
+    save_vectorstore
 )
 
 import streamlit as st
@@ -20,15 +21,20 @@ import os
 # Constantes
 EVAL_DATASET = "tests/eval_dataset.json"
 FALLBACK_EXAMPLES = [
-    "¿Qué beneficios de salud ofrece la empresa?",
-    "¿Qué incluye el programa PerksPlus?",
-    "¿Cuáles son las responsabilidades de un analista de datos?",
+    "¿Cuál es el objetivo de inversión del fondo BTG Pactual Oro?",
+    "¿Qué comisión cobra la Clase A del fondo BTG Pactual Renta Fija Internacional?",
+    "¿Cuál es el pacto de permanencia del fondo BTG Pactual Liquidez Dólares?",
 ]
 
 # Recursos cacheados
 @st.cache_resource(show_spinner="Cargando índice vectorial...")
 def get_vectordb():
-    return load_vectorstore_from_disk()
+    try:
+        return load_vectorstore_from_disk()
+    except FileNotFoundError:
+        with st.spinner("Indexando los prospectos (solo la primera vez, puede tardar unos minutos)..."):
+            save_vectorstore()
+        return load_vectorstore_from_disk()
 
 
 @st.cache_resource(show_spinner="Preparando el asistente...")
@@ -153,10 +159,10 @@ def render_sidebar():
     prompt_version = st.sidebar.selectbox(
         "Prompt (MLflow Prompt Registry)", options, index=options.index(default),
         format_func=lambda o: o.replace("prompts:/", ""),
-        help="@alias o versión fija. Registra cambios con `python -m app.prompt_registry`",
+        help="@alias o versión fija. Registra cambios con `python -m app.model.prompt_registry`",
     )
     k = st.sidebar.slider("Fragmentos a recuperar (k)", 1, 10, 4,
-                          help="Cuántos fragmentos de los PDFs se envían al LLM como contexto")
+                          help="Cuántos fragmentos de los prospectos se envían al LLM como contexto")
 
     st.sidebar.button("🗑️ Nueva conversación", width="stretch",
                       on_click=_new_conversation)
@@ -179,8 +185,8 @@ def render_chat(title, subtitle):
 
     try:
         chain, prompt_uri = get_chain(resolve_prompt(config["prompt_version"]), config["k"])
-    except FileNotFoundError as e:
-        st.error(str(e))
+    except Exception as e:
+        st.error(f"No se pudo preparar el asistente: {e}")
         st.stop()
 
     # Trazas en el experimento del chat, enlazadas a esta versión de la app
@@ -202,7 +208,7 @@ def render_chat(title, subtitle):
     for idx, msg in enumerate(st.session_state.messages):
         _render_message(idx, msg)
 
-    question = st.chat_input("¿Qué deseas consultar?") or pending
+    question = st.chat_input("¿Qué deseas consultar sobre los FICs internacionales?") or pending
     if not question:
         return
 
@@ -212,7 +218,7 @@ def render_chat(title, subtitle):
         st.markdown(question)
 
     with st.chat_message("assistant", avatar="🤖"):
-        with st.spinner("Consultando documentos..."):
+        with st.spinner("Consultando los prospectos..."):
             history = [(m["question"], m["answer"]) for m in st.session_state.messages]
             start = time.perf_counter()
             try:

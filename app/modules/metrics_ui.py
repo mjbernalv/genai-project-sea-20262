@@ -75,7 +75,7 @@ def _render_comparison(experiment):
     runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id],
                               order_by=["start_time DESC"])
     if runs.empty:
-        st.info("Aún no hay evaluaciones. Ejecuta `python app/run_eval.py`.")
+        st.info("Aún no hay evaluaciones. Ejecuta `python -m app.model.run_eval`.")
         return None
 
     metric_cols = [c for c in runs.columns if c.startswith("metrics.") and c.endswith("/mean")]
@@ -87,7 +87,7 @@ def _render_comparison(experiment):
     metrics = [c.replace("metrics.", "").replace("/mean", "") for c in metric_cols]
 
     st.subheader("⚖️ Comparación de configuraciones")
-    st.caption("Promedio de cada juez (0 a 1) por evaluación. Cada fila es una ejecución de `run_eval.py`.")
+    st.caption("Promedio de cada juez (0 a 1) por evaluación. Cada fila es una ejecución de `app.model.run_eval`.")
     st.dataframe(
         table.drop(columns=["run_id"]),
         width="stretch", hide_index=True,
@@ -193,14 +193,14 @@ def render_metrics():
     """
     Muestra la sección de métricas y evaluación en la interfaz de Streamlit.
     """
-    st.title("📈 Evaluación y monitoreo del chatbot")
+    st.title("📈 Evaluación y monitoreo del asistente de FICs")
     st.caption("Datos de MLflow. Para explorar trazas, prompts y versiones: `mlflow ui --port 5000`")
 
     experiment = mlflow.get_experiment_by_name(EVAL_EXPERIMENT)
     tab_eval, tab_users = st.tabs(["⚖️ Evaluación automática", "👥 Feedback de usuarios"])
     with tab_eval:
         if experiment is None:
-            st.info("Aún no hay evaluaciones. Ejecuta `python app/run_eval.py`.")
+            st.info("Aún no hay evaluaciones. Ejecuta `python -m app.model.run_eval`.")
         else:
             table = _render_comparison(experiment)
             if table is not None:

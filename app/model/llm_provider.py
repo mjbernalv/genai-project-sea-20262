@@ -5,6 +5,7 @@ del entorno.
 """
 from dotenv import load_dotenv
 import os
+import re
 
 load_dotenv()
 
@@ -20,7 +21,7 @@ DEFAULT_JUDGE_MODELS = {
 
 DEFAULT_EMBEDDINGS_MODELS = {
     "openai": "text-embedding-ada-002",
-    "fastembed": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "fastembed": "jinaai/jina-embeddings-v2-base-es",
 }
 
 def get_llm_provider() -> str:
@@ -111,11 +112,12 @@ def get_embeddings():
 
 def get_vectorstore_dir(base_dir: str = "vectorstore") -> str:
     """
-    Cada proveedor de embeddings genera vectores de distinta dimensión, así que
-    el índice FAISS se guarda en una carpeta por proveedor (vectorstore/openai,
-    vectorstore/fastembed) para que no se mezclen.
+    Cada modelo de embeddings genera vectores de distinta dimensión, así que el índice
+    FAISS se guarda en una carpeta por proveedor y modelo
+    (p. ej. vectorstore/fastembed/jina-embeddings-v2-base-es) para que no se mezclen.
     """
-    return os.getenv("VECTOR_DIR") or os.path.join(base_dir, get_embeddings_provider())
+    model = re.sub(r"[^A-Za-z0-9_.-]+", "-", get_embeddings_model_name().split("/")[-1])
+    return os.getenv("VECTOR_DIR") or os.path.join(base_dir, get_embeddings_provider(), model)
 
 
 def describe() -> dict:

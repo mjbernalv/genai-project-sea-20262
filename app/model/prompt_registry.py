@@ -8,7 +8,7 @@ import os
 import re
 
 PROMPT_DIR = "app/prompts"
-PROMPT_NAME = os.getenv("PROMPT_NAME", "asistente_rrhh")
+PROMPT_NAME = os.getenv("PROMPT_NAME", "asistente_fics_btg")
 PRODUCTION_ALIAS = "production"
 DEFAULT_PROMPT = f"prompts:/{PROMPT_NAME}@{PRODUCTION_ALIAS}"
 
@@ -87,8 +87,8 @@ def promote(version: int, alias=PRODUCTION_ALIAS, name=PROMPT_NAME):
 
 def resolve_prompt_ref(ref: str) -> str:
     """
-    Convierte un alias en su versión concreta: prompts:/asistente_rrhh@production
-    → prompts:/asistente_rrhh/3. Consulta el registro sin caché, para que una
+    Convierte un alias en su versión concreta: prompts:/asistente_fics_btg@production
+    → prompts:/asistente_fics_btg/3. Consulta el registro sin caché, para que una
     promoción (--promote) se note de inmediato. Otras referencias se devuelven igual.
     """
     if not ref.startswith("prompts:/") or "@" not in ref:
