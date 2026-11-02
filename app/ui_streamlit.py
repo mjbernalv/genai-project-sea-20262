@@ -1,11 +1,12 @@
 """
 Modulo principal de la aplicación Streamlit para el Asistente de FICs Internacionales de BTG Pactual Colombia.
 """
-from app.modules.chat_ui import render_chat
-import streamlit as st
 import sys, os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from app.modules.chat_ui import render_chat
+import streamlit as st
 
 st.set_page_config(page_title="Asistente FICs Internacionales BTG Pactual", page_icon="💰", layout="centered")
 
