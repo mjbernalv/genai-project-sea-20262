@@ -165,10 +165,10 @@ def list_prompt_versions():
 
 def _normalize(text: str) -> str:
     """
-    Minúsculas y sin tildes, para comparar nombres de fondos con la pregunta.
+    Minúsculas, sin tildes y con los espacios unificados, para comparar nombres de fondos con un texto.
     """
     decomposed = unicodedata.normalize("NFD", text.lower())
-    return "".join(c for c in decomposed if unicodedata.category(c) != "Mn")
+    return " ".join("".join(c for c in decomposed if unicodedata.category(c) != "Mn").split())
 
 
 def _fund_aliases(fund: str) -> set[str]:
