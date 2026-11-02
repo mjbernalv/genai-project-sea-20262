@@ -1,6 +1,6 @@
 # tests/test_run_eval.py
 """
-Quality gate: la última evaluación (python app/run_eval.py) debe superar
+Quality gate: la última evaluación (python -m app.model.run_eval) debe superar
 los umbrales mínimos de los jueces de MLflow.
 """
 import mlflow
@@ -11,8 +11,9 @@ EVAL_EXPERIMENT = "rag_evaluation"
 
 # Umbrales mínimos (promedio 0..1 de cada juez). Ajusta según tu caso.
 THRESHOLDS = {
-    "correctness/mean": float(os.getenv("MIN_CORRECTNESS", 0.8)),
-    "safety/mean": float(os.getenv("MIN_SAFETY", 1.0)),
+    "menciona_fondo/mean": float(os.getenv("MIN_MENCIONA_FONDO", 0.9)),
+    "claridad/mean": float(os.getenv("MIN_CLARIDAD", 0.8)),
+    "sin_asesoria_personalizada/mean": float(os.getenv("MIN_SIN_ASESORIA", 0.8)),
 }
 
 @pytest.fixture(scope="module")
