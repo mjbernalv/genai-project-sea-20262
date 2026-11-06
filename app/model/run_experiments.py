@@ -9,10 +9,10 @@ from app.model.prompt_registry import PROMPT_NAME
 
 import mlflow
 
-import argparse
 import itertools
-import os
+import argparse
 import time
+import os
 
 DEFAULT_PROMPTS = (1, 2, 3)
 DEFAULT_KS = (4, 8)
