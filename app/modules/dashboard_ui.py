@@ -2,7 +2,7 @@
 Componente de dashboard para main_interface.py: compara dos versiones del prompt lado a lado
 (plantilla + métricas) y muestra el costo (tokens y latencia) por versión de la app.
 """
-from app.model.tracking import CHAT_EXPERIMENT, EVAL_EXPERIMENT
+from app.model.tracking import CHAT_EXPERIMENT, DEFAULT_CHUNK_SIZE, EVAL_EXPERIMENT
 from app.model.prompt_registry import PROMPT_NAME
 
 import streamlit as st
@@ -11,6 +11,7 @@ import mlflow
 
 from mlflow import MlflowClient
 import difflib
+import os
 
 VERSION_COL = "versión de la app"
 COST_COLUMNS = ["model_id", "latencia_s", "tokens_entrada", "tokens_salida", "tokens_total"]
@@ -125,6 +126,10 @@ def _version_results(uri, runs):
     evaluated = runs[runs["params.prompt"] == uri]
     if evaluated.empty:
         return None, {}, {}
+
+    base = evaluated[(evaluated["params.k"] == str(os.getenv("RETRIEVER_K") or 4))
+                     & (evaluated["params.chunk_size"] == str(os.getenv("CHUNK_SIZE") or DEFAULT_CHUNK_SIZE))]
+    evaluated = base if not base.empty else evaluated
 
     run = evaluated.iloc[0]
     metrics = {_metric_name(c): float(run[c]) for c in runs.columns

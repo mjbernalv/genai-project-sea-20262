@@ -13,6 +13,8 @@ import re
 CHAT_EXPERIMENT = "chatbot_fics_btg"
 EVAL_EXPERIMENT = "rag_evaluation"
 
+DEFAULT_CHUNK_SIZE = 512
+
 _autolog_enabled = False
 _versions_with_params: set[str] = set()
 
@@ -26,11 +28,14 @@ def enable_tracing():
         _autolog_enabled = True
 
 
-def app_config(prompt_uri: str, k: int) -> dict:
+def app_config(prompt_uri: str, k: int, chunk_size: int | None = None) -> dict:
     """
     Devuelve un diccionario con la configuración activa de la app, para loguear en MLflow.
     """
-    return {**describe(), "prompt": prompt_uri, "k": str(k)}
+    config = {**describe(), "prompt": prompt_uri, "k": str(k)}
+    if chunk_size:
+        config["chunk_size"] = str(chunk_size)
+    return config
 
 
 def _prompt_label(prompt_uri: str) -> str:
@@ -42,38 +47,41 @@ def _prompt_label(prompt_uri: str) -> str:
     return "local-" + os.path.splitext(os.path.basename(prompt_uri))[0]
 
 
-def app_version_name(prompt_uri: str, k: int) -> str:
+def app_version_name(prompt_uri: str, k: int, chunk_size: int | None = None) -> str:
     """
-    Nombre legible y estable para la versión de la app.
+    Nombre legible y estable para la versión de la app. El tamaño de chunk solo se agrega si no es
+    el de por defecto, para que las versiones ya registradas conserven su nombre.
     MLflow no permite '/', ':', '.', '%', comillas en el nombre: se reemplazan por '-'.
     """
     cfg = describe()
     raw = f"rag-{cfg['llm_provider']}-{cfg['llm_model']}-{_prompt_label(prompt_uri)}-k{k}"
+    if chunk_size and chunk_size != DEFAULT_CHUNK_SIZE:
+        raw += f"-c{chunk_size}"
     return re.sub(r"[^A-Za-z0-9_-]+", "-", raw)
 
 
-def set_app_version(prompt_uri: str, k: int) -> str:
+def set_app_version(prompt_uri: str, k: int, chunk_size: int | None = None) -> str:
     """
     Marca la versión activa de la app: las trazas generadas a partir de ahora
     quedan enlazadas a ella. Devuelve el model_id.
     """
-    active = mlflow.set_active_model(name=app_version_name(prompt_uri, k))
+    active = mlflow.set_active_model(name=app_version_name(prompt_uri, k, chunk_size))
     if active.model_id not in _versions_with_params:
         # Los parámetros de un LoggedModel no se pueden sobrescribir: solo la primera vez
         if not mlflow.get_logged_model(active.model_id).params:
-            mlflow.log_model_params(app_config(prompt_uri, k), model_id=active.model_id)
+            mlflow.log_model_params(app_config(prompt_uri, k, chunk_size), model_id=active.model_id)
         _versions_with_params.add(active.model_id)
     return active.model_id
 
 
-def init_tracking(experiment: str, prompt_uri: str, k: int) -> str:
+def init_tracking(experiment: str, prompt_uri: str, k: int, chunk_size: int | None = None) -> str:
     """
     Inicializa el tracking de MLflow y marca la versión activa de la app.
     Devuelve el model_id de la versión activa.
     """
     mlflow.set_experiment(experiment)
     enable_tracing()
-    return set_app_version(prompt_uri, k)
+    return set_app_version(prompt_uri, k, chunk_size)
 
 
 def log_user_feedback(trace_id: str, thumbs_up: bool, user: str = "streamlit_user",
