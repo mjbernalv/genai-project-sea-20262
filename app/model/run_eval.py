@@ -2,17 +2,17 @@
 Modulo para ejecutar la evaluación de la cadena RAG con MLflow GenAI.
 
 Uso (desde la raíz del proyecto):
-    python -m app.model.run_eval                                   # los 3 evaluadores
+    python -m app.model.run_eval                                   # todos los evaluadores
     EVAL_SCORERS=menciona_fondo,claridad python -m app.model.run_eval      # solo algunos
     PROMPT_VERSION=prompts:/asistente_fics_btg@v3_analitico_estructurado python -m app.model.run_eval
 """
 
 from app.model.rag_pipeline import build_chain, detect_funds, load_vectorstore_from_disk
-from app.model.tracking import EVAL_EXPERIMENT, app_config, init_tracking
+from app.model.tracking import DEFAULT_CHUNK_SIZE, EVAL_EXPERIMENT, app_config, init_tracking
 from app.model.llm_provider import describe, get_judge_model_uri
 from app.model.prompt_registry import DEFAULT_PROMPT
 
-from mlflow.genai.scorers import Guidelines, scorer
+from mlflow.genai.scorers import Correctness, Guidelines, RetrievalGroundedness, RetrievalRelevance, scorer
 from mlflow.entities import Feedback, SpanType
 from mlflow.genai.judges import make_judge
 import mlflow
@@ -28,7 +28,7 @@ load_dotenv()
 
 # Configuración
 PROMPT_VERSION = os.getenv("PROMPT_VERSION") or DEFAULT_PROMPT
-CHUNK_SIZE = int(os.getenv("CHUNK_SIZE") or 512) 
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE") or DEFAULT_CHUNK_SIZE)
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP") or 50)
 K = int(os.getenv("RETRIEVER_K") or 4)
 DATASET_PATH = "tests/eval_dataset.json"
@@ -83,8 +83,8 @@ def menciona_fondo(outputs: str, trace) -> Feedback:
 
 def get_scorers(judge_model: str):
     """
-    Evaluadores propios del dominio: un scorer de código, un juez con make_judge y una guía
-    de no asesoría personalizada.
+    Jueces predefinidos de MLflow (correctness y retrieval_*) + evaluadores propios del dominio
+    (un scorer de código, un juez con make_judge y una guía de no asesoría personalizada).
     """
     claridad = make_judge(
         name="claridad",
@@ -102,6 +102,9 @@ def get_scorers(judge_model: str):
     )
 
     scorers = [
+        Correctness(model=judge_model),            # ¿coincide con la respuesta esperada?
+        RetrievalGroundedness(model=judge_model),  # ¿está sustentada en los documentos? (alucinación)
+        RetrievalRelevance(model=judge_model),     # ¿los fragmentos recuperados son pertinentes?
         Guidelines(
             name="sin_asesoria_personalizada",
             guidelines=(
@@ -126,16 +129,20 @@ def get_scorers(judge_model: str):
     return scorers
 
 
-def main():
-    vectordb = load_vectorstore_from_disk()
-    chain = build_chain(vectordb, prompt_version=PROMPT_VERSION, k=K)
+def main(prompt_version=PROMPT_VERSION, k=K, chunk_size=CHUNK_SIZE, vectordb=None):
+    """
+    Evalúa una configuración (prompt, k y tamaño de chunk). Si no se pasa un índice, usa el de disco.
+    run_experiments.py la llama con el índice que corresponde a cada tamaño de chunk.
+    """
+    vectordb = vectordb or load_vectorstore_from_disk()
+    chain = build_chain(vectordb, prompt_version=prompt_version, k=k)
     prompt_uri = chain.combine_docs_chain.llm_chain.prompt.metadata["prompt_uri"]
 
-    model_id = init_tracking(EVAL_EXPERIMENT, prompt_uri, K)
+    model_id = init_tracking(EVAL_EXPERIMENT, prompt_uri, k, chunk_size)
     judge_model = get_judge_model_uri()
 
     print(f"📊 Experimento MLflow: {EVAL_EXPERIMENT}")
-    print(f"⚙️  App: {describe()} | prompt={prompt_uri} | k={K}")
+    print(f"⚙️  App: {describe()} | prompt={prompt_uri} | k={k} | chunk={chunk_size}")
     scorers = get_scorers(judge_model)
     print(f"⚖️  Juez: {judge_model} | {len(scorers)} jueces: {[sc.name for sc in scorers]}")
     if os.getenv("MLFLOW_GENAI_EVAL_MAX_WORKERS") == "1":
@@ -145,11 +152,11 @@ def main():
         result = chain.invoke({"question": question, "chat_history": []})
         return result["answer"]
 
-    run_name = f"{describe()['llm_provider']}|{prompt_uri.replace('prompts:/', '')}|k{K}"
+    run_name = f"{describe()['llm_provider']}|{prompt_uri.replace('prompts:/', '')}|k{k}|c{chunk_size}"
     with mlflow.start_run(run_name=run_name):
         mlflow.log_params({
-            **app_config(prompt_uri, K),
-            "chunk_size": CHUNK_SIZE,
+            **app_config(prompt_uri, k),
+            "chunk_size": chunk_size,
             "chunk_overlap": CHUNK_OVERLAP,
             "judge_model": judge_model,
             "dataset": DATASET_PATH,
