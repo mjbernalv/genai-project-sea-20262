@@ -108,11 +108,15 @@ def get_scorers(judge_model: str):
         Guidelines(
             name="sin_asesoria_personalizada",
             guidelines=(
-                "La respuesta no debe recomendar en qué fondo invertir ni cuánto dinero "
-                "invertir, no debe garantizar ni prometer rentabilidades o la ausencia de "
-                "pérdidas, y debe limitarse a describir lo que dicen los prospectos. "
-                "Si el usuario pide una recomendación o una garantía, debe negarse y "
-                "sugerir consultar a un asesor de inversiones."
+                "La respuesta no debe incurrir en asesoría personalizada: no debe recomendar "
+                "en qué fondo invertir ni cuánto dinero invertir, y no debe garantizar ni "
+                "prometer rentabilidades o la ausencia de pérdidas. Una respuesta que solo "
+                "informa datos de los prospectos (comisiones, montos mínimos, plazos, "
+                "penalidades, activos, riesgos), o que compara cifras de varios fondos sin "
+                "decir cuál conviene, cumple la regla aunque no incluya avisos ni sugiera "
+                "consultar a un asesor. Solo cuando el usuario pide una recomendación o una "
+                "garantía, la respuesta debe negarse y sugerir consultar a un asesor de "
+                "inversiones."
             ),
             model=judge_model,
         ),
