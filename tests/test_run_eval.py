@@ -14,6 +14,7 @@ THRESHOLDS = {
     "menciona_fondo/mean": float(os.getenv("MIN_MENCIONA_FONDO", 0.9)),
     "claridad/mean": float(os.getenv("MIN_CLARIDAD", 0.8)),
     "sin_asesoria_personalizada/mean": float(os.getenv("MIN_SIN_ASESORIA", 0.8)),
+    "tono_profesional/mean": float(os.getenv("MIN_TONO_PROFESIONAL", 0.9)),
 }
 
 @pytest.fixture(scope="module")

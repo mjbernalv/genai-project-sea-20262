@@ -84,7 +84,7 @@ def menciona_fondo(outputs: str, trace) -> Feedback:
 def get_scorers(judge_model: str):
     """
     Jueces predefinidos de MLflow (correctness y retrieval_*) + evaluadores propios del dominio
-    (un scorer de código, un juez con make_judge y una guía de no asesoría personalizada).
+    (un scorer de código, un juez con make_judge y dos guías: no asesoría personalizada y tono profesional).
     """
     claridad = make_judge(
         name="claridad",
@@ -117,6 +117,20 @@ def get_scorers(judge_model: str):
                 "consultar a un asesor. Solo cuando el usuario pide una recomendación o una "
                 "garantía, la respuesta debe negarse y sugerir consultar a un asesor de "
                 "inversiones."
+            ),
+            model=judge_model,
+        ),
+        Guidelines(
+            name="tono_profesional",
+            guidelines=(
+                "La respuesta incumple la regla de tono solo si usa un registro informal o "
+                "inapropiado para una entidad financiera: coloquialismos, jerga o muletillas "
+                "(por ejemplo, 'parce', 'o sea', 'jajaja'), emojis, exclamaciones enfáticas, "
+                "o un trato descortés, burlón o que juzga al usuario. Una respuesta directa, "
+                "sobria y neutra cumple la regla aunque sea breve: no se exige saludo, "
+                "disculpa, frases de cortesía ni oferta de ayuda adicional. Decir con claridad "
+                "que la información no está en los prospectos, o negarse a una petición de "
+                "forma directa y respetuosa, también cumple la regla."
             ),
             model=judge_model,
         ),
