@@ -89,12 +89,17 @@ def get_scorers(judge_model: str):
     claridad = make_judge(
         name="claridad",
         instructions=(
-            "Evalúa si la respuesta {{ outputs }} a la pregunta {{ inputs }} es clara y "
-            "comprensible para una persona que invierte por primera vez y no tiene "
-            "conocimientos financieros: las cifras y condiciones (comisiones, plazos, "
-            "montos mínimos, penalidades) se entienden y los términos técnicos se explican "
-            "o son fáciles de deducir. Si la respuesta solo admite no tener la información "
-            "o rechaza la petición, es clara cuando lo dice de forma directa. "
+            "Evalúa si la respuesta {{ outputs }} a la pregunta {{ inputs }} es clara para "
+            "una persona que invierte por primera vez: se entiende qué se responde, la "
+            "información está organizada y las cifras y condiciones que aparecen "
+            "(comisiones, plazos, montos mínimos, penalidades) se leen sin ambigüedad. "
+            "Evalúa únicamente lo que la respuesta dice: no la reprobes por omitir datos "
+            "que la pregunta no pidió, ni por usar términos propios del prospecto (por "
+            "ejemplo, 'renta variable', 'perfil de riesgo' o 'Fogafín') cuando el sentido "
+            "general se entiende por el contexto. Es confusa si es contradictoria, "
+            "ambigua, desordenada, evade la pregunta o depende de jerga técnica que impide "
+            "entender la idea principal. Si la respuesta solo admite no tener la "
+            "información o rechaza la petición, es clara cuando lo dice de forma directa. "
             "Responde true si es clara y false si es confusa."
         ),
         feedback_value_type=bool,
