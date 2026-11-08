@@ -1,0 +1,16 @@
+artifact_path: "/Users/majonator/Documents/EAFIT/Maestri\u0301a CD&A/2026-2/Seminario\
+  \ de experiencias en anali\u0301tica/genai-project-sea-20262/mlruns/3/models/m-d4994ae21ee74ebe87a7eee65043c9bd/artifacts"
+flavors: {}
+is_signature_from_type_hint: false
+metadata:
+  mlflow.model.isExternal: true
+mlflow_version: 3.17.2
+model_id: m-d4994ae21ee74ebe87a7eee65043c9bd
+model_uuid: m-d4994ae21ee74ebe87a7eee65043c9bd
+prompts: null
+signature:
+  inputs: '[{"type": "boolean", "required": true}]'
+  outputs: '[{"type": "boolean", "required": true}]'
+  params: null
+type_hint_from_example: false
+utc_time_created: '2026-11-06 23:18:09.633436'
