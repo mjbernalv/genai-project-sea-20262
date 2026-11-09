@@ -174,7 +174,7 @@ Cada evaluación deja una traza por pregunta en el experimento `rag_evaluation`,
 
 ## 4. Evaluación de prompts, k y chunk
 
-Con `app/model/run_experiments.py` se evaluaron las 12 combinaciones de prompt (v1 `asistente_basico`, v2 `resumido_directo` y v3 `analitico_estructurado`), k (4 y 8 fragmentos recuperados) y tamaño de chunk (512 y 1024 caracteres) sobre las 16 preguntas de `tests/eval_dataset.json`, con `gpt-4o`, juez `gpt-4o-mini` y embeddings `text-embedding-ada-002` (OpenAI). Cada combinación quedó registrada en el experimento `rag_evaluation` de MLflow.
+Se evaluaron las 12 combinaciones de prompt (v1 `asistente_basico`, v2 `resumido_directo` y v3 `analitico_estructurado`), k (4 y 8 fragmentos recuperados) y tamaño de chunk (512 y 1024 caracteres) sobre las 16 preguntas de `tests/eval_dataset.json`, con `gpt-4o`, juez `gpt-4o-mini` y embeddings `text-embedding-ada-002` (OpenAI). Cada combinación quedó registrada en el experimento `rag_evaluation` de MLflow.
 
 - **Puntaje:** promedio simple de seis métricas: `correctness`, `retrieval_groundedness`, `sin_asesoria_personalizada`, `menciona_fondo`, `claridad` y `tono_profesional`. `retrieval_relevance` se muestra aparte porque mide solo al retriever.
 - **Costo:** tokens y latencia medios por pregunta, leídos de las trazas de la app (sin las llamadas de los jueces).
