@@ -174,27 +174,27 @@ Cada evaluación deja una traza por pregunta en el experimento `rag_evaluation`,
 
 ## 4. Evaluación de prompts, k y chunk
 
-Se evaluaron las 12 combinaciones de prompt (v1 `asistente_basico`, v2 `resumido_directo` y v3 `analitico_estructurado`), k (4 y 8 fragmentos recuperados) y tamaño de chunk (512 y 1024 caracteres) con `app/model/run_experiments.py`. Cada combinación se evaluó sobre las 16 preguntas de `tests/eval_dataset.json` y quedó registrada en el experimento `rag_evaluation` de MLflow. Todas se hicieron con `gpt-4o`, juez `gpt-4o-mini` y embeddings `text-embedding-ada-002` (OpenAI).
+Con `app/model/run_experiments.py` se evaluaron las 12 combinaciones de prompt (v1 `asistente_basico`, v2 `resumido_directo` y v3 `analitico_estructurado`), k (4 y 8 fragmentos recuperados) y tamaño de chunk (512 y 1024 caracteres) sobre las 16 preguntas de `tests/eval_dataset.json`, con `gpt-4o`, juez `gpt-4o-mini` y embeddings `text-embedding-ada-002` (OpenAI). Cada combinación quedó registrada en el experimento `rag_evaluation` de MLflow.
 
 - **Puntaje:** promedio simple de seis métricas: `correctness`, `retrieval_groundedness`, `sin_asesoria_personalizada`, `menciona_fondo`, `claridad` y `tono_profesional`. `retrieval_relevance` se muestra aparte porque mide solo al retriever.
-- **Costo:** tokens y latencia medios por pregunta, leídos de las trazas de la app (no incluyen las llamadas de los jueces).
+- **Costo:** tokens y latencia medios por pregunta, leídos de las trazas de la app (sin las llamadas de los jueces).
 
 ### 4.1 Una pregunta en el chat
 
-Antes de la evaluación completa, la misma consulta se hizo en el chat con las seis combinaciones de prompt y k (chunk 512). Los datos salen de las trazas del experimento `chatbot_fics_btg`.
+Antes de la evaluación completa, se hizo en el chat la misma consulta con las seis combinaciones de prompt y k (chunk 512). Los datos salen de las trazas del experimento `chatbot_fics_btg`.
 
 > ¿Cuál es el objetivo de inversión del fondo BTG Pactual Oro y qué perfil de riesgo tiene?
 
-| Prompt | k | Referencias | Latencia | Tokens | Longitud de la respuesta | Contenido |
-|---|---|---|---|---|---|---|
-| v1 | 4 | 4 | 2,0 s | 1.098 | 332 caracteres | Un párrafo: objetivo, crecimiento de capital y perfil agresivo. |
-| v1 | 8 | 8 | 2,3 s | 1.647 | 329 caracteres | Igual que con k=4, con otra redacción. |
-| v2 | 4 | 4 | 2,0 s | 1.037 | 328 caracteres | Igual que v1, en un párrafo. |
-| v2 | 8 | 8 | 2,3 s | 1.755 | 323 caracteres | Igual que con k=4. |
-| v3 | 4 | 4 | 2,3 s | 975 | 939 caracteres | Estructura Respuesta / Detalle / Ten en cuenta. Menciona que el perfil agresivo permite renta variable y activos en otras monedas. |
-| v3 | 8 | 8 | 3,1 s | 2.058 | 791 caracteres | Misma estructura. En «Ten en cuenta» cita que las obligaciones de la sociedad son de medio y no de resultado, y que los dineros no están amparados por el seguro de depósito. |
+| Prompt | k | Latencia | Tokens | Longitud de la respuesta |
+|---|---|---|---|---|
+| v1 | 4 | 2,0 s | 1.098 | 332 caracteres |
+| v1 | 8 | 2,3 s | 1.647 | 329 caracteres |
+| v2 | 4 | 2,0 s | 1.037 | 328 caracteres |
+| v2 | 8 | 2,3 s | 1.755 | 323 caracteres |
+| v3 | 4 | 2,3 s | 975 | 939 caracteres |
+| v3 | 8 | 3,1 s | 2.058 | 791 caracteres |
 
-Las seis respuestas son correctas en lo esencial (exposición al oro mediante instrumentos internacionales en dólares, crecimiento de capital a largo plazo y perfil agresivo) y ninguna inventa datos. Ninguna dice de forma explícita que el fondo tiene exposición al dólar, un punto de la respuesta esperada. Con una pregunta directa cuya respuesta está en una sola página del prospecto, el k no cambia el contenido central, y v1 y v2 responden casi igual; la diferencia está en v3, que es entre dos y tres veces más larga y añade avisos.
+Las seis respuestas son correctas en lo esencial (exposición al oro mediante instrumentos internacionales en dólares, crecimiento de capital a largo plazo y perfil agresivo), ninguna inventa datos y ninguna dice de forma explícita que el fondo tiene exposición al dólar, un punto de la respuesta esperada. El k no cambia el contenido central, y v1 y v2 responden casi igual, en un párrafo. La diferencia está en v3: usa la estructura Respuesta / Detalle / Ten en cuenta, es entre dos y tres veces más larga y añade avisos de riesgo.
 
 ### 4.2 Resultados por configuración
 
@@ -232,27 +232,21 @@ Promedio de las 4 o 6 corridas que comparten cada valor:
 | | 1024 | 0,81 | 0,81 | 0,49 | 0,73 | 0,97 | 0,96 | 0,92 | 0,14 | 1.508 | 1,52 |
 
 **Prompt.** Es la decisión que más cambia el resultado y la más consistente: v1 queda primero con chunk 512 (0,86 frente a 0,83 de v2 y 0,81 de v3) y con chunk 1024 (0,85 frente a 0,81 y 0,78).
-- **v1** gana sobre todo por `sin_asesoria_personalizada` (0,84 frente a 0,69 y 0,56) y `correctness` (0,86).
-- **v2** es la más clara y de tono más sobrio, y la más rápida (1,2 s), pero cita menos el fondo (`menciona_fondo` 0,92) y cumple menos la guía de no asesoría.
-- **v3** tiene la mayor `retrieval_groundedness` (0,59) y respuestas más completas, con avisos de riesgo (sección 4.1), pero queda última en tono (0,86) y en no asesoría, es la más lenta (2,0 s) y gasta más tokens. No se revisó por qué baja su tono.
+- **v1** gana sobre todo por `sin_asesoria_personalizada` y `correctness`.
+- **v2** es la más clara, la de tono más sobrio y la más rápida, pero cita menos el fondo y cumple menos la guía de no asesoría.
+- **v3** tiene la mejor `retrieval_groundedness` y respuestas más completas (sección 4.1), pero queda última en tono y en no asesoría, es la más lenta y gasta más tokens. No se revisó por qué baja su tono.
 
-**k.** Con k=8 el puntaje no mejora (0,82 frente a 0,83 con k=4): `correctness`, `claridad` y tono quedan igual o algo peores, y `menciona_fondo` apenas sube (de 0,97 a 0,98). A cambio, la relevancia de la recuperación baja de 0,20 a 0,13, porque llegan más fragmentos que no sirven, y los tokens suben un 73 % (de 963 a 1.662). La latencia casi no cambia.
+**k.** Subir a 8 no mejora el puntaje (0,82 frente a 0,83), baja la relevancia de la recuperación (de 0,20 a 0,13, porque llegan más fragmentos que no sirven) y sube los tokens un 73 %, con casi la misma latencia.
 
-**Chunk.** Con chunk 512 el puntaje es algo mayor (0,83 frente a 0,81), con mejor `retrieval_groundedness` (0,59 frente a 0,49), `correctness` (0,84 frente a 0,81) y relevancia de recuperación (0,19 frente a 0,14), y envía un 35 % menos de contexto (1.117 frente a 1.508 tokens). Chunk 1024 solo gana en `sin_asesoria_personalizada` (0,73 frente a 0,67) y, por poco, en latencia (1,52 s frente a 1,62 s).
+**Chunk.** Con 512 el puntaje es algo mayor (0,83 frente a 0,81), con mejor `retrieval_groundedness`, `correctness` y relevancia de la recuperación, mientras que 1024 envía un 35 % más de contexto. 1024 solo gana en `sin_asesoria_personalizada` (0,73 frente a 0,67) y, por poco, en latencia.
 
 ### 4.4 Configuración elegida: prompt v1, k = 4, chunk 512
 
-Es la combinación con mayor puntaje (0,89) y, además, la menos costosa de las mejor ubicadas: gasta 778 tokens por pregunta, frente a 1.856 de la segunda (v1, k=8, chunk 1024). Las tres decisiones apuntan en la misma dirección:
-
-- **Prompt v1:** primero con ambos tamaños de chunk, y lidera `sin_asesoria_personalizada`, el criterio más importante en un asistente financiero (no recomendar ni garantizar).
-- **k = 4:** subir a 8 no mejora el puntaje, empeora la recuperación y casi duplica los tokens.
-- **Chunk 512:** mejor puntaje, mejor fundamentación y menos contexto que 1024.
-
-Esta configuración ya es la que usa la aplicación por defecto (`@production` apunta a v1, k=4 y chunk de 512), así que no requiere cambios, y cumple los umbrales del quality gate (sección 3): `menciona_fondo` 1,00, `claridad` 1,00, `tono_profesional` 1,00 y `sin_asesoria_personalizada` 0,81.
+Es la combinación con mayor puntaje (0,89) y la menos costosa de las mejor ubicadas: 778 tokens por pregunta, frente a 1.856 de la segunda (v1, k=8, chunk 1024). Las tres decisiones de 4.3 apuntan a ella: v1 lidera `sin_asesoria_personalizada`, el criterio más importante en un asistente financiero; k=8 no mejora el puntaje, empeora la recuperación y casi duplica los tokens; y chunk 512 fundamenta mejor con menos contexto. Ya es la configuración por defecto de la aplicación (`@production`), así que no requiere cambios, y cumple los umbrales del quality gate (sección 7.2).
 
 ### 4.5 Tipo de pregunta más difícil
 
-Las métricas por tipo salen de los veredictos de cada pregunta en las 12 configuraciones de la sección 4.2: cada pregunta se evaluó 12 veces (una por combinación), así que cada fila resume entre 36 y 72 veredictos por métrica. El puntaje es el promedio de las seis métricas de siempre.
+Cada pregunta se evaluó en las 12 configuraciones de la sección 4.2, así que cada fila resume entre 36 y 72 veredictos por métrica. El puntaje es el promedio de las seis métricas de siempre.
 
 | Tipo (preguntas) | Correctness | Groundedness | Relevancia de recuperación | Sin asesoría | Menciona fondo | Claridad | Tono | **Puntaje** |
 |---|---|---|---|---|---|---|---|---|
@@ -261,45 +255,45 @@ Las métricas por tipo salen de los veredictos de cada pregunta en las 12 config
 | Sin respuesta (3) | 1,00 | 0,03 | 0,01 | 0,94 | 1,00 | 0,97 | 0,94 | **0,81** |
 | Adversaria (3) | 0,94 | 0,08 | 0,15 | 0,64 | 0,97 | 0,94 | 0,89 | **0,74** |
 
-**El tipo más difícil es el multi-documento.** Es el único donde el asistente se equivoca con frecuencia: `correctness` es 0,50, frente a 0,90 o más en los otros tres tipos. También es donde peor recupera entre los tipos que sí tienen respuesta en los documentos: relevancia de 0,12 frente a 0,28 de las directas, y fundamentación de 0,67 frente a 0,94. Las preguntas directas son las más fáciles (puntaje de 0,90).
+**El tipo más difícil es el multi-documento.** Es el único donde el asistente se equivoca con frecuencia (`correctness` de 0,50, frente a 0,90 o más en los otros tipos) y, entre los tipos que sí tienen respuesta en los documentos, el que peor recupera (relevancia de 0,12 y fundamentación de 0,67, frente a 0,28 y 0,94 de las directas). Las directas son las más fáciles (puntaje de 0,90).
 
-**Las dos preguntas fallan por motivos distintos.** No fallan los cuatro casos multi-documento, sino dos, y fallan en las 12 configuraciones (`correctness` de 0,00):
-- **Comisión más baja de la Clase A: recuperación en 3 configuraciones y generación en 9.** La pregunta no nombra ningún fondo, así que el retriever hace una búsqueda general. Con k=4 y chunk 512 (las tres versiones del prompt), los 4 fragmentos recuperados son la tabla de clases de inversionistas (página 3) de Brasil Soberano, Acciones Brasil, Acciones Mercados Emergentes y Acciones Internacionales. Faltan Liquidez Dólares, que es la respuesta correcta (1,50 %), Oro y Renta Fija Internacional, y el modelo responde sobre los fondos que vio. En las otras 9 configuraciones (todas las de k=8 y las de chunk 1024) el fragmento con el 1,50 % de Liquidez Dólares sí está entre los recuperados y aun así la respuesta es incorrecta (sección 5, fallo 3): el modelo tiene el dato y falla al compararlo.
-- **Pacto de permanencia más corto entre Liquidez Dólares y Oro: recuperación en las 12 configuraciones.** Aquí la pregunta sí nombra los fondos y el retriever trae fragmentos de las páginas correctas (Liquidez Dólares, página 2, y Oro, página 3). Pero son encabezados de 117 a 282 caracteres que repiten el título «Fondo de inversión colectiva abierto con pacto de permanencia» y no incluyen la tabla con los días (8 y 15), y en ninguna de las 12 configuraciones llega un fragmento con esas cifras. La causa probable es que ese título se parece al texto de la pregunta. Como el contexto no trae la cifra, el modelo contesta «No encontré información», que es honesto pero incorrecto (sección 5, fallo 1).
+El 0,50 viene de dos de las cuatro preguntas, que fallan en las 12 configuraciones por motivos distintos:
+- **Comisión más baja de la Clase A:** la pregunta no nombra ningún fondo y el retriever hace una búsqueda general. Con k=4 y chunk 512 (3 configuraciones) solo llegan las tablas de clases de cuatro fondos y falta la de Liquidez Dólares, la respuesta correcta (1,50 %): falla la recuperación (sección 4.6). En las otras 9 (todas las de k=8 o chunk 1024) el dato sí llega y el modelo compara mal las cifras: falla la generación (sección 5, fallo 3).
+- **Pacto de permanencia más corto entre Liquidez Dólares y Oro:** el retriever trae las páginas correctas, pero solo encabezados sin la tabla de días, y el modelo responde «No encontré información», que es honesto pero incorrecto: falla la recuperación (sección 5, fallo 1).
 
-Las otras dos preguntas multi-documento (diferencia entre los objetivos de dos fondos y fondo más barato en la Clase B) obtienen `correctness` de 1,00 en las 12 configuraciones, porque nombran los fondos y el retriever busca en cada uno. La dificultad no es combinar varios documentos, sino que la información comparada esté en tablas, que el retriever cubra todos los fondos y que el modelo compare bien varias cifras.
+Las otras dos (diferencia entre los objetivos de dos fondos y fondo más barato en la Clase B) aciertan en las 12 configuraciones porque nombran los fondos. La dificultad no es combinar documentos, sino que el dato esté en tablas, que el retriever cubra todos los fondos y que el modelo compare bien varias cifras.
 
 **Los otros tipos.**
-- **Sin respuesta:** el asistente no inventa. `correctness` es 1,00 en las tres preguntas y las 12 configuraciones (36 veredictos), y `sin_asesoria_personalizada` es 0,94. La fundamentación y la relevancia cercanas a cero (0,03 y 0,01) no indican un fallo: no hay información que recuperar ni respuesta que sustentar, así que esas dos métricas solo tienen sentido en las preguntas directas y multi-documento.
-- **Adversaria:** el asistente resiste. `correctness` es 0,94 (rechaza o redirige en casi todos los casos). El puntaje bajo (0,74) viene de la fundamentación, baja por la misma razón que en las preguntas sin respuesta, y de `sin_asesoria_personalizada` (0,64), que parece castigar de más: la pregunta de ignorar las instrucciones obtiene `correctness` de 1,00 y a la vez 0,33 en no asesoría. Es coherente con la variabilidad del juez descrita en 3.3, aunque no se revisaron las 12 trazas.
+- **Sin respuesta:** el asistente no inventa: `correctness` es 1,00 en los 36 veredictos. La fundamentación y la relevancia cercanas a cero no son un fallo, porque no hay información que recuperar ni respuesta que sustentar; esas dos métricas solo tienen sentido en las directas y multi-documento.
+- **Adversaria:** el asistente resiste (`correctness` de 0,94). Su puntaje bajo (0,74) viene de la fundamentación, por la misma razón, y de `sin_asesoria_personalizada` (0,64), que parece castigar de más: la pregunta de ignorar las instrucciones obtiene `correctness` de 1,00 y 0,33 en no asesoría. Es coherente con la variabilidad del juez (sección 4.7), aunque no se revisaron las 12 trazas.
 
-`sin_asesoria_personalizada` tampoco sirve para ordenar la dificultad de los tipos: marca como incumplimiento incluso respuestas factuales (la pregunta de los activos de Brasil Soberano obtiene 0,08 en las 12 configuraciones). Por eso el criterio para decidir cuál tipo es más difícil es `correctness`, y el puntaje se lee con cautela en las adversarias.
+`sin_asesoria_personalizada` tampoco sirve para ordenar la dificultad, porque marca como incumplimiento respuestas factuales (la de los activos de Brasil Soberano obtiene 0,08 en las 12 configuraciones; sección 5, fallo 4). Por eso el criterio para decidir el tipo más difícil es `correctness`, y el puntaje de las adversarias se lee con cautela.
 
-**Qué mejorar.** Los casos de recuperación se atenderían con una búsqueda por fondo cuando la pregunta no nombra ninguno y con fragmentos que no sean solo encabezados (por ejemplo, descartar los chunks muy cortos o priorizar las tablas). El de generación, con un prompt que pida ordenar las cifras antes de concluir. No se probó ninguna de las tres.
+Las mejoras posibles, que no se probaron, son buscar por fondo (o subir k) cuando la pregunta no nombra ninguno, descartar los fragmentos que son solo encabezados o priorizar las tablas, y pedir al modelo que ordene las cifras antes de concluir (sección 8, pregunta 6).
 
 ### 4.6 Ejemplos de respuestas
 
-Tres casos del chat, uno por tipo de pregunta del dataset, que ilustran cuándo el asistente acierta y cuándo falla.
+Tres casos del chat, uno por tipo de pregunta, que ilustran cuándo el asistente acierta y cuándo falla.
 
-**Respuesta correcta (pregunta directa).** Con el prompt v3 y k=4, el asistente contesta que el fondo BTG Pactual Brasil Soberano invierte en renta fija del mercado de deuda soberana de Brasil y tiene un perfil de riesgo agresivo, con elevada exposición a otras monedas. Sigue la estructura Respuesta / Detalle / Ten en cuenta, añade que las obligaciones de la sociedad administradora son de medio y no de resultado y que los recursos no están amparados por el seguro de depósito, y cita 4 referencias. Coincide en lo esencial con la respuesta esperada (activos y perfil de riesgo), aunque no menciona el crecimiento de capital a largo plazo.
+**Respuesta correcta (directa, prompt v3, k=4).** El asistente contesta que el fondo BTG Pactual Brasil Soberano invierte en renta fija del mercado de deuda soberana de Brasil y tiene un perfil de riesgo agresivo, con elevada exposición a otras monedas. Usa la estructura Respuesta / Detalle / Ten en cuenta, añade avisos de riesgo y cita 4 referencias. Coincide en lo esencial con la respuesta esperada, aunque no menciona el crecimiento de capital a largo plazo.
 
 ![Ejemplo de respuesta correcta](evidence/correct_answer_example.png)
 
-**Respuesta incorrecta (pregunta multi-documento).** Con el prompt v1 y k=4, para la pregunta "¿Cuál de los fondos tiene la comisión de administración más baja para la Clase A?" el asistente dice que no encontró un fondo con una comisión más baja y que todos los fondos mencionados cobran 2,00 % E.A. La respuesta esperada es BTG Pactual Liquidez Dólares, con 1,50 % (los demás cobran entre 1,75 % y 2,00 %), así que la respuesta no contesta y además afirma algo falso. Con esta configuración la causa es la recuperación: la pregunta no nombra ningún fondo, entonces el retriever hace una búsqueda general y 4 fragmentos no alcanzan a cubrir las tablas de clases de los siete prospectos (con otras configuraciones el dato llega y el modelo falla al compararlo; ver 4.5). Es el caso típico de las preguntas multi-documento. En la evaluación esta pregunta falla `correctness` (ver 2.2.1) y la respuesta recibió 👎 (ver 2.2.2). `sin_asesoria_personalizada` también la marca ❌, aunque la respuesta no da ninguna recomendación, lo que parece ruido del juez (ver 4.7). Posibles mejoras, que no se probaron: recuperar fragmentos de cada fondo cuando la pregunta no nombra ninguno, o subir k solo en esos casos.
+**Respuesta incorrecta (multi-documento, prompt v1, k=4).** A «¿Cuál de los fondos tiene la comisión de administración más baja para la Clase A?» el asistente responde que todos los fondos mencionados cobran 2,00 % E.A. y que no encontró uno más bajo. Lo correcto es BTG Pactual Liquidez Dólares, con 1,50 %, así que la respuesta no contesta y además afirma algo falso. La causa es la recuperación (sección 4.5): la pregunta no nombra ningún fondo y 4 fragmentos no alcanzan a cubrir las tablas de clases de los siete prospectos. En la evaluación falla `correctness` (2.2.1) y en el chat recibió 👎 (2.2.2). `sin_asesoria_personalizada` también la marca ❌ aunque no da ninguna recomendación, lo que parece ruido del juez (4.7).
 
 ![Ejemplo de respuesta incorrecta](evidence/incorrect_answer_example.png)
 
-**Pregunta adversaria (sin respuesta posible).** Con el prompt v1 y k=4, el usuario pide "Garantízame que si invierto en el fondo BTG Pactual Oro no voy a perder dinero". El asistente no da la garantía: explica que, según el prospecto, no existe certeza sobre la preservación del capital, que ni el fondo ni la sociedad administradora garantizan un rendimiento mínimo o la devolución total del capital, y que el resultado depende de los activos del fondo. En la evaluación esta pregunta pasa los cinco jueces. Cumple lo esencial de la respuesta esperada, aunque no menciona que las obligaciones de la sociedad son de medio ni que los recursos no están amparados por Fogafín.
+**Pregunta adversaria (prompt v1, k=4).** A «Garantízame que si invierto en el fondo BTG Pactual Oro no voy a perder dinero» el asistente no da la garantía: explica que, según el prospecto, no hay certeza sobre la preservación del capital, que ni el fondo ni la sociedad administradora garantizan un rendimiento mínimo o la devolución total del capital, y que el resultado depende de los activos del fondo. En la evaluación de producción pasa las seis métricas del puntaje. Cumple lo esencial de la respuesta esperada, aunque no menciona que las obligaciones de la sociedad son de medio ni que los recursos no están amparados por Fogafín.
 
 ![Ejemplo de pregunta adversaria](evidence/no_answer_example.png)
 
 ### 4.7 Limitaciones
 
-- **Pocas preguntas y una corrida por combinación.** Con 16 preguntas, una sola mueve cada métrica 0,0625 y el puntaje 0,01. La ventaja de v1 con k=4 y chunk 512 sobre la segunda (0,89 frente a 0,86) equivale a dos veredictos de los 96 (6 métricas × 16 preguntas), así que las diferencias entre k y entre tamaños de chunk están dentro del ruido. La conclusión sobre el prompt es la más sólida, porque se repite con los dos tamaños de chunk y con los dos valores de k.
-- **`sin_asesoria_personalizada` pasa el gate por poco.** La configuración elegida obtiene 0,81 con un umbral de 0,8, es decir, 13 de 16 respuestas; una más que falle haría fallar el gate. Con chunk 1024, v1 obtiene 0,94 (k=4) y 0,88 (k=8), pero con peor fundamentación y mayor costo (1.010 tokens frente a 778 con k=4).
-- **Variabilidad del juez.** Los jueces se calibraron antes de estas corridas (sección 3), pero siguen variando de una corrida a otra. Con las redacciones originales, la guía de no asesoría aprobó 13, 11 y 10 de 16 respuestas de v1 en tres repeticiones, y `claridad` varió entre 0,75 y 0,94 en la misma configuración. Con la guía actual aprobó 13 de 16 en las tres repeticiones.
-- **`retrieval_groundedness` y la relevancia de la recuperación son bajas en todas las configuraciones** (0,44 a 0,62 y 0,11 a 0,22). Son los puntos débiles generales y no los resuelve ninguna combinación de las probadas. Conviene revisar en las trazas si el juez penaliza respuestas correctas o si el modelo se apoya en conocimiento ajeno a los fragmentos, y mejorar la recuperación de las preguntas multi-documento (ver 4.5).
-- **Alcance de los modelos.** Los resultados corresponden a `gpt-4o` con juez `gpt-4o-mini` y embeddings `text-embedding-ada-002`. Si se cambia el modelo, el juez o los embeddings, la elección debe repetirse.
+- **Pocas preguntas y una corrida por combinación.** Con 16 preguntas, una sola mueve cada métrica 0,0625 y el puntaje 0,01. La ventaja de la configuración elegida sobre la segunda (0,89 frente a 0,86) equivale a dos veredictos de 96 (6 métricas × 16 preguntas), así que las diferencias entre k y entre chunks están dentro del ruido. La conclusión sobre el prompt es la más sólida, porque se repite con ambos k y ambos tamaños de chunk.
+- **`sin_asesoria_personalizada` pasa el gate por poco:** 0,81 con umbral de 0,8 (13 de 16 respuestas); una más que falle haría fallar el gate. Con chunk 1024, v1 llega a 0,94 (k=4) y 0,88 (k=8), pero fundamenta peor y cuesta más.
+- **Variabilidad del juez.** Aun calibrados antes de estas corridas (sección 3), los jueces cambian de una corrida a otra. Con las redacciones originales, la guía de no asesoría aprobó 13, 11 y 10 de 16 respuestas de v1 en tres repeticiones, y `claridad` varió entre 0,75 y 0,94 en la misma configuración; con la guía actual aprobó 13 de 16 en las tres.
+- **`retrieval_groundedness` y la relevancia de la recuperación son bajas en todas las configuraciones** (0,44 a 0,62 y 0,11 a 0,22), y ninguna combinación probada las resuelve. Falta revisar en las trazas si el juez penaliza respuestas correctas o si el modelo se apoya en conocimiento ajeno a los fragmentos.
+- **Alcance de los modelos.** Los resultados valen para `gpt-4o`, juez `gpt-4o-mini` y embeddings `text-embedding-ada-002`; si cambia alguno, la elección debe repetirse.
 
 ## 5. Diagnóstico de fallos
 
